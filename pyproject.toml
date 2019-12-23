@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flask-lab"
-version = "0.0.1"
+version = "0.0.2"
 description = "Django-admin for flask with restful API."
 authors = ["Yifei Kong <kongyifei@gmail.com>"]
 license = "MIT"

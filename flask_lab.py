@@ -9,15 +9,14 @@ import json
 import os
 import re
 import sys
-from typing import Iterable
 from functools import wraps
+from typing import Iterable
 
 from flask import current_app, jsonify, request
 from flask.views import MethodView
-from playhouse.shortcuts import model_to_dict
 from peewee import Model
+from playhouse.shortcuts import model_to_dict
 from pwiz import get_connect_kwargs, get_option_parser
-
 
 """
 Default config
@@ -131,7 +130,11 @@ class MetaEndpoint(type):
         fields = {}
         filters = {}
         for k, v in attrs.items():
-            if inspect.isfunction(v) and k.startswith("get_") and k not in ("get_many", "get_one"):
+            if (
+                inspect.isfunction(v)
+                and k.startswith("get_")
+                and k not in ("get_many", "get_one")
+            ):
                 fields[k[4:]] = v
             if inspect.isfunction(v) and k.startswith("filter_"):
                 fields[k[7:]] = v
@@ -155,7 +158,13 @@ def catch_exception(fn):
         except Exception as ex:
             if current_app.debug:
                 raise
-            return jsonify({"status": "failed", "errmsg": str(ex), "data": [], "count": 0}), 400
+            return (
+                jsonify(
+                    {"status": "failed", "errmsg": str(ex), "data": [], "count": 0}
+                ),
+                400,
+            )
+
     return wrapped
 
 
@@ -264,7 +273,7 @@ class Endpoint(metaclass=MetaEndpoint):
         raise NotImplementedError("Bulk update is not supported for now.")
 
     def put_one(self, pk, obj_dict):
-        self.model.update(**obj_dict).where(self.model.id==pk)
+        self.model.update(**obj_dict).where(self.model.id == pk)
         obj_dict = model_to_dict(obj, recurse=True)
         obj_dict = self._add_extra_fields(obj_dict, obj.id)
 
@@ -285,8 +294,16 @@ class Endpoint(metaclass=MetaEndpoint):
             data = [self.get_one()]
             count = 1
         if data is None:
-            return jsonify({"status": "failed", "errmsg": "Not Found", "data": [], "count": 0}), 404
-        return jsonify({"data": data, "count": count, "status": "ok", "errmsg": ""}), 200
+            return (
+                jsonify(
+                    {"status": "failed", "errmsg": "Not Found", "data": [], "count": 0}
+                ),
+                404,
+            )
+        return (
+            jsonify({"data": data, "count": count, "status": "ok", "errmsg": ""}),
+            200,
+        )
 
     @catch_exception
     def do_post(self):
@@ -295,7 +312,10 @@ class Endpoint(metaclass=MetaEndpoint):
             data = self.post_many(args)
         else:
             data = [self.post_one(args)]  # Always return an array, see above comments
-        return jsonify({"status": "ok", "errmsg": "", "data": data, "count": len(data)}), 200
+        return (
+            jsonify({"status": "ok", "errmsg": "", "data": data, "count": len(data)}),
+            200,
+        )
 
     @catch_exception
     def do_put(self, pk=None):
@@ -305,7 +325,10 @@ class Endpoint(metaclass=MetaEndpoint):
         else:
             assert pk == args["id"]
             data = self.put_one(pk, args)
-        return jsonify({"status": "ok", "errmsg": "", "data": data, "count": len(data)}), 200
+        return (
+            jsonify({"status": "ok", "errmsg": "", "data": data, "count": len(data)}),
+            201,
+        )
 
     @catch_exception
     def do_delete(self, pk):
@@ -349,6 +372,7 @@ def ensure_endpoint(model):
         return model
     return type(model.__name__ + "Endpoint", (Endpoint,), dict(model=model))
 
+
 def put(self, pk):
     try:
         args = request.get_json()
@@ -379,7 +403,7 @@ class FlaskLab:
             FLASK_LAB_PAGE_SIZE_PARAM_NAME=FLASK_LAB_PAGE_SIZE_PARAM_NAME,
             FLASK_LAB_OFFSET_PARAM_NAME=FLASK_LAB_OFFSET_PARAM_NAME,
             FLASK_LAB_LIMIT_PARAM_NAME=FLASK_LAB_LIMIT_PARAM_NAME,
-            FLASK_LAB_FIELDS_PARAM_NAME=FLASK_LAB_FIELDS_PARAM_NAME
+            FLASK_LAB_FIELDS_PARAM_NAME=FLASK_LAB_FIELDS_PARAM_NAME,
         )
         for k, v in default_config.items():
             app.config.setdefault(k, v)
@@ -534,6 +558,7 @@ def main():
         return
 
     from subprocess import check_output, CalledProcessError
+
     # call python -m pwiz to generate table. This is not pretty, I know.
     cmd = f"""python3 -m pwiz \
         {"--host "  + options.host if options.host else "" } \
@@ -556,9 +581,11 @@ def main():
         print("Generate model failed.")
         return
     generate_app(options.app_file, options.model_file, options.listen_address)
-    print(f"Flask app and model files have been generated as {options.app_file} and {options.model_file}")
-    print(f"Starting server with command `FLASK_APP={options.app_file} flask run`")
-    os.system(f"FLASK_APP={options.app_file} flask run")
+    print(
+        f"Flask app and model files have been generated as {options.app_file} and {options.model_file}"
+    )
+    print(f"Starting server with command `python3 {options.app_file}`")
+    os.system(f"python3 {options.app_file}")
 
 
 if __name__ == "__main__":
