@@ -291,7 +291,7 @@ class Endpoint(metaclass=MetaEndpoint):
             data, count = self.get_many()
         else:
             # Always return an array, which is easy for static languages like go to parse.
-            data = [self.get_one()]
+            data = [self.get_one(pk)]
             count = 1
         if data is None:
             return (
