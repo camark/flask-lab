@@ -4,6 +4,9 @@ Flask-Lab can create a restful api directly from database schema without any cod
 
 Flask-Lab is built with flask and peewee.
 
+
+[中文文档](README-zh.md)
+
 ## Quick Start
 
 ### Install
