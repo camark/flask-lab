@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "/Users/yifei/repos/flask-lab/.venv/bin/python3",
+    "python.formatting.provider": "black"
+}
